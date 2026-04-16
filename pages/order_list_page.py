@@ -27,20 +27,13 @@ class OrderListPage(BasePage):
         return self.get_text(counter_locator)
     
     @allure.step('Проверяем наличие заказа в "Ленте заказов"')
-    def is_order_present(self, order_id):
-        WebDriverWait(self.driver, 10).until(lambda driver: len(driver.find_elements(*ORDER_NUMBERS_IN_FEED)) > 0)
-        order_elements = self.find_elements(*ORDER_NUMBERS_IN_FEED)
-        for element in order_elements:
-            if f"#0{order_id}" in element.text:
-                return True
-        return False
-    
+    def is_order_present(self, order_id, timeout=15):
+        self.wait_for_text_in_elements(ORDER_NUMBERS_IN_FEED, f"#0{order_id}", timeout)
+        return True
+
     @allure.step('Проверяем наличие заказа в разделе "В работе"')
     def is_order_in_work(self, order_id, timeout=15):
-        try:
-            WebDriverWait(self.driver, timeout).until(lambda driver: "Все текущие заказы готовы!" not in driver.find_element(*ORDER_NUMBERS_IN_WORK).text)
-            WebDriverWait(self.driver, timeout).until(lambda driver: str(order_id) in driver.find_element(*ORDER_NUMBERS_IN_WORK).text)
-            return True
-        except:
-            return False
+        self.wait_for_text_not_equal(ORDER_NUMBERS_IN_WORK, "Все текущие заказы готовы!", timeout)
+        self.wait_for_text_in_elements(ORDER_NUMBERS_IN_WORK, str(order_id), timeout)
+        return True
         

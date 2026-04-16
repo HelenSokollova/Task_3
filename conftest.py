@@ -1,14 +1,10 @@
 import pytest
 import requests
 from selenium import webdriver
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 from pages.constructor_page import ConstructorPage
 from pages.ingredient_page import IngredientPage
-from pages.base_page import BasePage
+from pages.login_page import LoginPage
 from urls import TestUrls
-from locators.login_page_locators import *
-from locators.constructor_page_locators import *
 from helpers import generate_random_string
 import data
 import time
@@ -51,13 +47,15 @@ def create_user_and_delete():
         headers = {'Authorization': token, 'Content-Type': 'application/json'}
         requests.delete(f'{TestUrls.BASE_URL}{TestUrls.USERS_URL}user', headers=headers)
 
+
 @pytest.fixture(scope='function')
 def authorized_user(driver, create_user_and_delete):
     user = create_user_and_delete
-    driver.get(TestUrls.login_page_url)
-    driver.find_element(*INPUT_EMAIL).send_keys(user["email"])
-    driver.find_element(*INPUT_PASSWORD).send_keys(user["password"])
-    BasePage(driver).safe_click(BUTTON_LOGIN)
+    login_page = LoginPage(driver)
+    login_page.open_page(TestUrls.login_page_url)
+    login_page.fill_email(user["email"])
+    login_page.fill_password(user["password"])
+    login_page.click_login_button()
     return driver
 
 
@@ -65,7 +63,7 @@ def authorized_user(driver, create_user_and_delete):
 def user_in_personal_account(authorized_user):
     constructor_page = ConstructorPage(authorized_user)
     constructor_page.click_button_personal_account()
-    WebDriverWait(authorized_user, 10).until(lambda driver: driver.current_url != TestUrls.constructor_page_url)  
+    constructor_page.wait_url_contains(data.personal_account_page_text)  
     return authorized_user
 
 
@@ -74,7 +72,7 @@ def ingredient_page(driver):
     constructor_page = ConstructorPage(driver)
     constructor_page.open_page(TestUrls.constructor_page_url)
     constructor_page.click_button_ingredient()
-    WebDriverWait(driver, 10).until(expected_conditions.url_contains("/ingredient/"))
+    constructor_page.wait_url_contains(data.ingredients_page_text)
     return IngredientPage(driver)
 
 

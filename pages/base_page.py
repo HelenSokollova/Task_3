@@ -111,3 +111,9 @@ class BasePage:
     def find_elements(self, by, value):
         return self.driver.find_elements(by, value)
     
+
+    @allure.step('Ожидаем появления текста "{expected_text}" среди элементов')
+    def wait_for_text_in_elements(self, locator, expected_text, timeout=30):
+        WebDriverWait(self.driver, timeout).until(lambda driver: any(expected_text in element.text for element in driver.find_elements(*locator)))
+        return self
+    
